@@ -47,7 +47,8 @@ export const generateHistogram = (data: Data[]):Histogram => {
     return result
 }
 
-export const generateHeatHistogram = (data : Data[]) => {
+// Full year with all days
+export const generateHeatDayHistogram = (data : Data[]) => {
 
     const yearRange = buildYearRange();
     let count = 0
@@ -55,6 +56,29 @@ export const generateHeatHistogram = (data : Data[]) => {
     data.map( record => {
         count += 1;
         const entry = dateToYMD(record.date);
+        const year = dateToYMD(record.date).slice(0,4)
+        yearRange[year][entry] += 1
+    } )
+
+    const result = {
+        datapoints: yearRange,
+        meta: {
+            investigator: data[0].investigator_code,
+            total: data.length,
+        }
+    }
+
+    return result
+}
+
+export const generateMonthHeatHistogram = (data : Data[]) => {
+
+    const yearRange = buildYearRange();
+    let count = 0
+
+    data.map( record => {
+        count += 1;
+        const entry = dateToYMD(record.date).slice(0,7);
         const year = dateToYMD(record.date).slice(0,4)
         yearRange[year][entry] += 1
     } )

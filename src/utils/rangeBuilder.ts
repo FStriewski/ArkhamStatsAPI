@@ -33,7 +33,7 @@ export const buildYearRange = () => {
         const dateObj: {[index: string]:any} = {}
         const dt = new Date(startDate);
         while (dt <= endDate) {
-            const record = dateToYMD(dt);
+            const record = dateToYMD(dt).slice(0,7);
             dateObj[record]= 0;
         dt.setDate(dt.getDate() + 1);
         }
