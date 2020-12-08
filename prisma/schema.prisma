@@ -10,7 +10,7 @@ datasource db {
 model decks {
   id                Int      @id @default(autoincrement())
   did               String
-  date              String
+  date              DateTime
   investigator_code String
   investigator_name String
   xp                Int?

@@ -2,3 +2,5 @@
 /postgres-docker/database.envnode_modules
 howto
 postgres-docker
+/dist
+dist

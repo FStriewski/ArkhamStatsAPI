@@ -20,7 +20,7 @@ app.get(`/bydate/:icode`, async (req, res) => {
           },
   })
   const hist = generateHeatHistogram(queryResult)
-
+  console.log(hist)
   res.json(hist)
 })
 

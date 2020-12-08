@@ -1,8 +1,8 @@
-import {postgresToYMD, dateToYMD} from './dateparser';
+import {postgresToYMD, dateToYMD, postgresToDatestring} from './dateparser';
 import {buildYearRange} from './rangeBuilder';
 
 export type Data = {
-    date: string,
+    date: Date,
     investigator_code: string;
 }
 
@@ -25,7 +25,7 @@ export const generateHistogram = (data: Data[]):Histogram => {
     const cache: DataPoint[] = []
 
     data.map(record => {
-        const date = record.date;
+        const date = dateToYMD(record.date); // RM time from date
         const item = cache.find(entry => entry.x === date)
         if (item){
             item.y += 1
@@ -43,17 +43,19 @@ export const generateHistogram = (data: Data[]):Histogram => {
             total: cache.length,
         }
     }
-    console.log(result)
+
     return result
 }
 
 export const generateHeatHistogram = (data : Data[]) => {
 
     const yearRange = buildYearRange();
+    let count = 0
 
     data.map( record => {
-        const entry = postgresToYMD(record.date);
-        const year = record.date.slice(0,4)
+        count += 1;
+        const entry = dateToYMD(record.date);
+        const year = dateToYMD(record.date).slice(0,4)
         yearRange[year][entry] += 1
     } )
 
@@ -64,6 +66,7 @@ export const generateHeatHistogram = (data : Data[]) => {
             total: data.length,
         }
     }
+
     return result
 }
 
