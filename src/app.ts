@@ -10,17 +10,17 @@ app.use(bodyParser.json())
 
 app.get(`/investigator/:icode`, async (req, res) => {
   const { icode } = req.params
-  const investigatorCode = icode[0] === '0' ? icode.slice(1,5) : icode // Leading 0 needs to go
+
   return await prisma.decks.findMany({
     where: {
-      investigator_code: String(investigatorCode),
+      investigator_code: String(icode),
     },
           select:{
             investigator_code: true,
             date: true,
           },
   }).then(queryResult => {
-    const hist = generateHistogram(queryResult, [investigatorCode], SCALE.MONTH)
+    const hist = generateHistogram(queryResult, [icode], SCALE.MONTH)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
@@ -31,7 +31,7 @@ app.get(`/investigatorComparison/`, async (req, res) => {
 
   const investigatorList = [i0, i1, i2]
     .filter((icode: string) => icode !== undefined)
-    .map((icode: string) => icode[0] === '0' ? icode.slice(1,5): icode);
+    .map((icode: string) => icode);
   
   return await prisma.decks.findMany({
     where: {

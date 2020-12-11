@@ -35,7 +35,7 @@ export const generateHistogram = (data : Data[], ids: string[], scale:Scale) => 
     const result = {
         datapoints: compositObj,
         meta: {
-            investigator: data[0].investigator_code,
+            investigator: ids,
             total: data.length,
         }
     }
