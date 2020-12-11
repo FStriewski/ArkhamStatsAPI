@@ -2,4 +2,7 @@
 /postgres-docker/database.envnode_modules
 howto
 postgres-docker
-dist
+/dist
+dist/*
+**/wwwroot/dist/**/*.map
+dist/**/*.js
