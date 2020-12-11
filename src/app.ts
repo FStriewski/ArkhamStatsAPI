@@ -2,7 +2,8 @@ import { PrismaClient } from "@prisma/client"
 import * as bodyParser from 'body-parser'
 import express from 'express'
 
-import {generateMonthHeatHistogram} from './utils/histogram';
+import {generateHistogram, SCALE} from './utils/histogram';
+
 
 const prisma = new PrismaClient()
 const app = express()
@@ -19,7 +20,7 @@ app.get(`/bydate/:icode`, async (req, res) => {
             date: true,
           },
   })
-  const hist = generateMonthHeatHistogram(queryResult)
+  const hist = generateHistogram(queryResult, SCALE.MONTH)
   console.log(hist)
   res.json(hist)
 })
