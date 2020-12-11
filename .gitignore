@@ -4,5 +4,5 @@ howto
 postgres-docker
 /dist
 dist/*
-**/wwwroot/dist/**/*.map
+dist/**/*.map
 dist/**/*.js

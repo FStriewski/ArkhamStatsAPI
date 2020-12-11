@@ -1,5 +1,6 @@
 import {postgresToYMD, dateToYMD} from './dateparser'
 import {generateHistogram, SCALE} from './histogram';
+import { SingleDatePoint } from './types';
 
 
 export const buildTimeRange = (scale: SCALE) => {
@@ -30,11 +31,6 @@ export const buildTimeRange = (scale: SCALE) => {
             endDate: new Date("2020-12-31")
         },
     ]
-
-    type SingleDatePoint = {
-        date: string;
-        value:number;
-    }
 
     // Used for Frappe: {"datapoints":{"2016":{"2016-01":0,"2016-02":0,...}}} 
     const generateKeyVal = (startDate: Date, endDate: Date) => {
