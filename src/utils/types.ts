@@ -1,5 +1,5 @@
 export type SingleDatePoint = {
-    date: string;
-    value:number;
+    // date: string;
+    [index: string]: any;
 }
 

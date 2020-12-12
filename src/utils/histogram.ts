@@ -16,8 +16,7 @@ export enum SCALE {
 
 export const generateHistogram = (data : Data[], ids: string[], scale:Scale) => {
 
-    const compositObj: {[key: string]: any}  = {}
-    ids.forEach(id => compositObj[id] = buildTimeRange(scale));
+    const timerange = buildTimeRange(scale, ids);
 
     data.map( record => {
         const year = dateToYMD(record.date).slice(0,4)
@@ -27,13 +26,13 @@ export const generateHistogram = (data : Data[], ids: string[], scale:Scale) => 
         : dateToYMD(record.date).slice(0,7);
         
         const target = scale === SCALE.DAY 
-            ? compositObj[record.investigator_code][year].filter((datapoint:SingleDatePoint) => datapoint.date === entry)
-            : compositObj[record.investigator_code][year].filter((datapoint:SingleDatePoint) => datapoint.date.slice(0,7) === entry)
-        target[0].value += 1
+            ? timerange[year].filter((datapoint:SingleDatePoint) => datapoint.date === entry)
+            : timerange[year].filter((datapoint:SingleDatePoint) => datapoint.date.slice(0,7) === entry)
+        target[0][record.investigator_code] += 1
     } )
 
     const result = {
-        datapoints: compositObj,
+        datapoints: timerange, 
         meta: {
             investigator: ids,
             total: data.length,

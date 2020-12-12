@@ -3,7 +3,7 @@ import {generateHistogram, SCALE} from './histogram';
 import { SingleDatePoint } from './types';
 
 
-export const buildTimeRange = (scale: SCALE) => {
+export const buildTimeRange = (scale: SCALE, ids: string[]) => {
     const years = [
         {
             label: "2016",
@@ -54,12 +54,10 @@ export const buildTimeRange = (scale: SCALE) => {
                 :dateToYMD(dt).slice(0,7);
 
             if(!dateArr.find(entry => entry.date === date)){
-                dateArr.push(
-                    {
-                    date,
-                    value: 0 
-                    }
-            )}
+                const obj: {[index: string]:any} = {}
+                obj.date = date
+                ids.forEach(id => obj[id] = 0)
+                dateArr.push(obj)}
         dt.setDate(dt.getDate() + 1);
         }
         return dateArr;

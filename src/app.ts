@@ -21,6 +21,7 @@ app.get(`/investigator/:icode`, async (req, res) => {
           },
   }).then(queryResult => {
     const hist = generateHistogram(queryResult, [icode], SCALE.MONTH)
+    console.log(hist)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
@@ -45,6 +46,7 @@ app.get(`/investigatorComparison/`, async (req, res) => {
           },
   }).then(queryResult => {
     const hist = generateHistogram(queryResult, investigatorList, SCALE.MONTH)
+    // console.log(hist)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
