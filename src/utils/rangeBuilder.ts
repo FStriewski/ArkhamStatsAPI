@@ -30,6 +30,11 @@ export const buildTimeRange = (scale: SCALE, ids: string[]) => {
             startDate: new Date("2020-01-01"),
             endDate: new Date("2020-12-31")
         },
+        {
+            label: "2021",
+            startDate: new Date("2021-01-01"),
+            endDate: new Date("2021-12-31")
+        },
     ]
 
     // Used for Frappe: {"datapoints":{"2016":{"2016-01":0,"2016-02":0,...}}} 
