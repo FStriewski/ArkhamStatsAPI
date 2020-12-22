@@ -22,23 +22,24 @@ export const factionMembers: {[key: string]: string[]} = {
 }
 
 const getNumberOfDecks = async (iclass: string) => {
-  console.log(2)
-  // console.log(iclass)
-  //  return iclass==='all' 
-  return await prisma.$queryRaw('SELECT date, COUNT(id) AS count FROM decks GROUP BY date;')
-  // : await prisma.$queryRaw(` SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${factionMembers[iclass].join(',')})) AS cnt FROM decks GROUP BY date`)
-  .then((queryResult) => {
+  if(iclass==='all'){
+    return await prisma.$queryRaw('SELECT date, COUNT(id) AS count FROM decks GROUP BY date;')
+      .then((queryResult) => {
     const modifRes = dateIssue(queryResult)
-    console.log(3)
-    // console.log(JSON.stringify(modifRes))
     const hist = generateCountTimeline(modifRes, iclass, SCALE.MONTH)
-    console.log(JSON.stringify(hist))
     return hist
   }).catch(e => console.log(e))
+  }
+  else{
+    const members = factionMembers[iclass].map(mem => `'${mem}'`).join(',')
+    return  await prisma.$queryRaw(`SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`)
+      .then((queryResult) => {
+    const modifRes = dateIssue(queryResult)
+    const hist = generateCountTimeline(modifRes, iclass, SCALE.MONTH)
+    return hist
+  }).catch(e => console.log(e))
+  }
 }
-
-// const totalNumberOfDecks = await getNumberOfDecks('all');
-// console.log(totalNumberOfDecks)
 
 const dateIssue = (result: any) => 
   result.map((tick: Tick) => ({

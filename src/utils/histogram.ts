@@ -32,7 +32,7 @@ export const generateCountTimeline = (data : Count[], iclass: string, scale:Scal
         const target = scale === SCALE.DAY 
         ? timerange[year].filter((sdp:SingleDatePoint) => sdp.date === entry)
         : timerange[year].filter((sdp:SingleDatePoint) => sdp.date.slice(0,7) === entry)
-        
+
         target[0][iclass] += record.count
     })
     const result = {
