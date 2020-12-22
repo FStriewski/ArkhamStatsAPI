@@ -1,12 +1,63 @@
 import { PrismaClient } from "@prisma/client"
 import express from 'express'
 import * as bodyParser from 'body-parser'
-import {generateHistogram, SCALE} from './utils/histogram';
-
+import {generateHistogram, SCALE, generateCountTimeline} from './utils/histogram';
 
 const prisma = new PrismaClient()
 const app = express()
 app.use(bodyParser.json())
+
+type Tick = {
+  investigator_code: string;
+  date: string;
+}
+
+export const factionMembers: {[key: string]: string[]} = {
+	'guardian' : ["01001", "02001", "03001", "04001", "98010", "06001", "07001", "60101"],
+	'seeker':  ["01002", "02002", "03002", "04002", "05002", "06002", "07002", "98007", "60201"],
+	'rogue': ["01003", "02003", "03003", "04003", "05003", "06003", "07003", "60301"],
+	'survivor': ["01005", "02005", "03005", "04005", "05005", "06005", "98013", "60501"],
+	'mystic': ["01004", "02004", "03004", "04004", "05004", "05006", "06004", "98016", "60401"],
+	'neutral': ["03006"]
+}
+
+const getNumberOfDecks = async (iclass: string) => {
+  console.log(2)
+  // console.log(iclass)
+  //  return iclass==='all' 
+  return await prisma.$queryRaw('SELECT date, COUNT(id) AS count FROM decks GROUP BY date;')
+  // : await prisma.$queryRaw(` SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${factionMembers[iclass].join(',')})) AS cnt FROM decks GROUP BY date`)
+  .then((queryResult) => {
+    const modifRes = dateIssue(queryResult)
+    console.log(3)
+    // console.log(JSON.stringify(modifRes))
+    const hist = generateCountTimeline(modifRes, iclass, SCALE.MONTH)
+    console.log(JSON.stringify(hist))
+    return hist
+  }).catch(e => console.log(e))
+}
+
+// const totalNumberOfDecks = await getNumberOfDecks('all');
+// console.log(totalNumberOfDecks)
+
+const dateIssue = (result: any) => 
+  result.map((tick: Tick) => ({
+      ...tick,
+      date: new Date(tick.date)
+    })
+    )
+
+/*
+
+Normalize these by total decks build per month (and have % values)
+
+*/ 
+
+app.get(`/decks/total/:iclass`, async (req, res) => {
+  const { iclass } = req.params
+  console.log(1)
+  return await getNumberOfDecks(iclass).then(result => res.json(result))
+})
 
 app.get(`/investigator/:icode`, async (req, res) => {
   const { icode } = req.params
@@ -19,9 +70,9 @@ app.get(`/investigator/:icode`, async (req, res) => {
             investigator_code: true,
             date: true,
           },
-  }).then(queryResult => {
-    const hist = generateHistogram(queryResult, [icode], SCALE.MONTH)
-    console.log(hist)
+  }).then((queryResult) => {
+    const modifRes = dateIssue(queryResult)
+    const hist = generateHistogram(modifRes, [icode], SCALE.MONTH)
     return res.json(hist)
   }).catch(e => console.log(e))
 })

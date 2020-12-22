@@ -37,18 +37,6 @@ export const buildTimeRange = (scale: SCALE, ids: string[]) => {
         },
     ]
 
-    // Used for Frappe: {"datapoints":{"2016":{"2016-01":0,"2016-02":0,...}}} 
-    const generateKeyVal = (startDate: Date, endDate: Date) => {
-        const dateObj: {[index: string]:any} = {}
-        const dt = new Date(startDate);
-        while (dt <= endDate) {
-            const record = dateToYMD(dt).slice(0,7);
-            dateObj[record] = 0;
-        dt.setDate(dt.getDate() + 1);
-        }
-        return dateObj;
-    }
-
     // Used for all other: 
     const generateDateSpan = (startDate: Date, endDate: Date, scale: SCALE) => {
         const dateArr: SingleDatePoint[] = []
