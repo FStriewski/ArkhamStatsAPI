@@ -1,6 +1,7 @@
 import {postgresToYMD, dateToYMD, postgresToDatestring} from './dateparser';
 import {buildTimeRange} from './rangeBuilder';
 import { SingleDatePoint } from './types';
+import {generateTotalCount} from '../app';
 
 export type Data = {
     date: Date,
@@ -11,32 +12,49 @@ export type Count = {
     count: number;
 }
 
-type Scale = SCALE.MONTH | SCALE.DAY
+export type Scale = SCALE.MONTH | SCALE.DAY
 
 export enum SCALE {
     DAY = "DAY",
     MONTH = "MONTH",
 }
 
+export const retrieveYearEntity = (record: Count | Data, scale: Scale) => {
+    const year = dateToYMD(record.date).slice(0,4)
+    const entry = scale === SCALE.DAY
+    ? dateToYMD(record.date)
+    : dateToYMD(record.date).slice(0,7);
+
+    return {year, entry}
+}
+
 // Process cound data
-export const generateCountTimeline = (data : Count[], iclass: string, scale:Scale) => {
+export const generateClassCountHistogram = async (data : Count[], iclass: string, scale:Scale) => {
     const timerange = buildTimeRange(scale, [iclass]);
-        
+    const total = await generateTotalCount(scale);
+    
     data.map( record => {
-        const year = dateToYMD(record.date).slice(0,4)
-        
-        const entry = scale === SCALE.DAY
-        ? dateToYMD(record.date)
-        : dateToYMD(record.date).slice(0,7);
-        
+        const {year, entry} = retrieveYearEntity(record, scale);
         const target = scale === SCALE.DAY 
         ? timerange[year].filter((sdp:SingleDatePoint) => sdp.date === entry)
         : timerange[year].filter((sdp:SingleDatePoint) => sdp.date.slice(0,7) === entry)
-
+        
         target[0][iclass] += record.count
     })
+
+    const normalizedValues = () => {
+        for (let year in timerange){
+            timerange[year].map(month => {
+                const normaliser = total[year].find(totalmonth => totalmonth.date === month.date)
+                return {...month, [iclass]: Math.floor(month[iclass]/normaliser['all'])}
+            })
+        }
+    }
+    console.log(JSON.stringify(normalizedValues())) // => LOGS UNDEFINED
+
     const result = {
         datapoints_absolute: timerange, 
+        datapoints_relative: normalizedValues(), 
         meta: {
             investigator: [iclass],
             total: data.length,
@@ -45,17 +63,12 @@ export const generateCountTimeline = (data : Count[], iclass: string, scale:Scal
     return result
 }
 
-export const generateHistogram = (data : Data[], ids: string[], scale:Scale) => {
-
+export const generateInvestigatorHistogram = (data : Data[], ids: string[], scale:Scale) => {
     const timerange = buildTimeRange(scale, ids);
-
+    // const total = generateTotalCount(scale);
+    
     data.map( record => {
-        const year = dateToYMD(record.date).slice(0,4)
-
-        const entry = scale === SCALE.DAY
-        ? dateToYMD(record.date)
-        : dateToYMD(record.date).slice(0,7);
-        
+        const {year, entry} = retrieveYearEntity(record, scale);
         const target = scale === SCALE.DAY 
             ? timerange[year].filter((sdp:SingleDatePoint) => sdp.date === entry)
             : timerange[year].filter((sdp:SingleDatePoint) => sdp.date.slice(0,7) === entry)

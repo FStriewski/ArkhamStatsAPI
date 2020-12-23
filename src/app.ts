@@ -1,7 +1,10 @@
 import { PrismaClient } from "@prisma/client"
 import express from 'express'
 import * as bodyParser from 'body-parser'
-import {generateHistogram, SCALE, generateCountTimeline} from './utils/histogram';
+import {generateInvestigatorHistogram, SCALE, generateClassCountHistogram, retrieveYearEntity, Scale} from './utils/histogram';
+import { SingleDatePoint } from './utils/types';
+import {buildTimeRange} from './utils/rangeBuilder';
+
 
 const prisma = new PrismaClient()
 const app = express()
@@ -21,33 +24,25 @@ export const factionMembers: {[key: string]: string[]} = {
 	'neutral': ["03006"]
 }
 
-const getNumberOfDecks = async (iclass: string) => {
-  if(iclass==='all'){
+const dateIssue = (result: any) => result.map((tick: Tick) => ({...tick, date: new Date(tick.date)}));
+
+export const generateTotalCount = async (scale:Scale ) => {
     return await prisma.$queryRaw('SELECT date, COUNT(id) AS count FROM decks GROUP BY date;')
       .then((queryResult) => {
-    const modifRes = dateIssue(queryResult)
-    const hist = generateCountTimeline(modifRes, iclass, SCALE.MONTH)
-    return hist
-  }).catch(e => console.log(e))
-  }
-  else{
-    const members = factionMembers[iclass].map(mem => `'${mem}'`).join(',')
-    return  await prisma.$queryRaw(`SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`)
-      .then((queryResult) => {
-    const modifRes = dateIssue(queryResult)
-    const hist = generateCountTimeline(modifRes, iclass, SCALE.MONTH)
-    return hist
-  }).catch(e => console.log(e))
-  }
-}
-
-const dateIssue = (result: any) => 
-  result.map((tick: Tick) => ({
-      ...tick,
-      date: new Date(tick.date)
+        const modifRes = dateIssue(queryResult)
+        const timerange = buildTimeRange(scale, ['all']);
+        
+        modifRes.map( (record: any) => {
+            const {year, entry} = retrieveYearEntity(record, scale);
+            const target = scale === SCALE.DAY 
+            ? timerange[year].filter((sdp:SingleDatePoint) => sdp.date === entry)
+            : timerange[year].filter((sdp:SingleDatePoint) => sdp.date.slice(0,7) === entry)
+            
+            target[0]['all'] += record.count
+        })
+      return timerange
     })
-    )
-
+}
 /*
 
 Normalize these by total decks build per month (and have % values)
@@ -56,8 +51,27 @@ Normalize these by total decks build per month (and have % values)
 
 app.get(`/decks/total/:iclass`, async (req, res) => {
   const { iclass } = req.params
-  console.log(1)
-  return await getNumberOfDecks(iclass).then(result => res.json(result))
+  if(iclass==='all'){
+    const hist = await generateTotalCount(SCALE.MONTH)
+
+        const result = {
+          datapoints_absolute: hist, 
+          meta: {
+              investigator: [iclass],
+              total: 0,
+          }
+        }
+      return res.json(result)
+  }else{
+    const members = factionMembers[iclass].map(mem => `'${mem}'`).join(',')
+    return  await prisma.$queryRaw(`SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`)
+      .then(async (queryResult) => {
+    const modifRes = dateIssue(queryResult)
+    const hist = await generateClassCountHistogram(modifRes, iclass, SCALE.MONTH)
+    return res.json(hist)
+  }).catch(e => console.log(e));
+}
+
 })
 
 app.get(`/investigator/:icode`, async (req, res) => {
@@ -73,7 +87,7 @@ app.get(`/investigator/:icode`, async (req, res) => {
           },
   }).then((queryResult) => {
     const modifRes = dateIssue(queryResult)
-    const hist = generateHistogram(modifRes, [icode], SCALE.MONTH)
+    const hist = generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
@@ -97,12 +111,9 @@ app.get(`/investigatorComparison/`, async (req, res) => {
             date: true,
           },
   }).then(queryResult => {
-    const hist = generateHistogram(queryResult, investigatorList, SCALE.MONTH)
-    // console.log(hist)
+    const hist = generateInvestigatorHistogram(queryResult, investigatorList, SCALE.MONTH)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
-
-app.get('/', (req, res) => res.send('Hello World!'));
 
 export default app;
