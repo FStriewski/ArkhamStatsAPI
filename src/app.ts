@@ -56,6 +56,7 @@ app.get(`/decks/total/:iclass`, async (req, res) => {
 
         const result = {
           datapoints_absolute: hist, 
+          datapoints_relative: hist, 
           meta: {
               investigator: [iclass],
               total: 0,
