@@ -85,9 +85,10 @@ app.get(`/investigator/:icode`, async (req, res) => {
             investigator_code: true,
             date: true,
           },
-  }).then((queryResult) => {
+  }).then(async (queryResult) => {
     const modifRes = dateIssue(queryResult)
-    const hist = generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH)
+    const hist = await generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH)
+    console.log(hist)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
@@ -110,8 +111,8 @@ app.get(`/investigatorComparison/`, async (req, res) => {
             investigator_code: true,
             date: true,
           },
-  }).then(queryResult => {
-    const hist = generateInvestigatorHistogram(queryResult, investigatorList, SCALE.MONTH)
+  }).then(async (queryResult) => {
+    const hist = await generateInvestigatorHistogram(queryResult, investigatorList, SCALE.MONTH)
     return res.json(hist)
   }).catch(e => console.log(e))
 })

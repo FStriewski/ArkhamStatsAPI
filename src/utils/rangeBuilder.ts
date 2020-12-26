@@ -1,6 +1,6 @@
 import {postgresToYMD, dateToYMD} from './dateparser'
 import { SCALE} from './histogram';
-import { SingleDatePoint } from './types';
+import { SingleDatePoint, KEYLISTCLASS, KEYLISTINVESTIGATOR  } from './types';
 import { YEARS } from './constants';
 
 
@@ -14,9 +14,9 @@ export const buildTimeRange = (scale: SCALE, ids: string[]) => {
                 :dateToYMD(dt).slice(0,7);
 
             if(!dateArr.find(entry => entry.date === date)){
-                const obj: {[index: string]:any} = {}
+                const obj: any = {}
                 obj.date = date
-                ids.forEach(id => obj[id] = 0)
+                ids.forEach(id => obj[id as KEYLISTCLASS | KEYLISTINVESTIGATOR] = 0)
                 dateArr.push(obj)}
         dt.setDate(dt.getDate() + 1);
         }
