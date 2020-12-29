@@ -1,7 +1,7 @@
 import {postgresToYMD, dateToYMD} from './dateparser'
-import { SCALE} from './histogram';
-import { SingleDatePoint, KEYLISTCLASS, KEYLISTINVESTIGATOR  } from './types';
-import { YEARS } from './constants';
+import { SCALE} from './constants';
+import { SingleDatePoint } from './types';
+import { YEARS, KEYLISTCLASS, KEYLISTINVESTIGATOR } from './constants';
 
 
 export const buildTimeRange = (scale: SCALE, ids: string[]) => {

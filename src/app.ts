@@ -1,8 +1,9 @@
 import { PrismaClient } from "@prisma/client"
 import express from 'express'
 import * as bodyParser from 'body-parser'
-import {generateInvestigatorHistogram, SCALE, generateClassCountHistogram, retrieveYearEntity, Scale} from './utils/histogram';
-import { SingleDatePoint } from './utils/types';
+import {generateInvestigatorHistogram, generateClassCountHistogram, retrieveYearEntity} from './histogram';
+import { SingleDatePoint, Scale } from './utils/types';
+import { SCALE, MODE } from './utils/constants';
 import {buildTimeRange} from './utils/rangeBuilder';
 
 
@@ -43,13 +44,8 @@ export const generateTotalCount = async (scale:Scale ) => {
       return timerange
     })
 }
-/*
 
-Normalize these by total decks build per month (and have % values)
-
-*/ 
-
-app.get(`/decks/total/:iclass`, async (req, res) => {
+app.get(`/class/dist/:iclass`, async (req, res) => {
   const { iclass } = req.params
   if(iclass==='all'){
     const hist = await generateTotalCount(SCALE.MONTH)
@@ -68,14 +64,13 @@ app.get(`/decks/total/:iclass`, async (req, res) => {
     return  await prisma.$queryRaw(`SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`)
       .then(async (queryResult) => {
     const modifRes = dateIssue(queryResult)
-    const hist = await generateClassCountHistogram(modifRes, iclass, SCALE.MONTH)
+    const hist = await generateClassCountHistogram(modifRes, iclass, SCALE.MONTH, MODE.DIST)
     return res.json(hist)
   }).catch(e => console.log(e));
 }
-
 })
 
-app.get(`/investigator/:icode`, async (req, res) => {
+app.get(`/investigator/dist/:icode`, async (req, res) => {
   const { icode } = req.params
 
   return await prisma.decks.findMany({
@@ -88,14 +83,13 @@ app.get(`/investigator/:icode`, async (req, res) => {
           },
   }).then(async (queryResult) => {
     const modifRes = dateIssue(queryResult)
-    const hist = await generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH)
+    const hist = await generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH, MODE.DIST)
     console.log(hist)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
 
-
-app.get(`/investigatorComparison/`, async (req, res) => {
+app.get(`/investigators/dist`, async (req, res) => {
   const { i0, i1, i2 } = req.query
 
   const investigatorList = [i0, i1, i2]
@@ -113,7 +107,25 @@ app.get(`/investigatorComparison/`, async (req, res) => {
             date: true,
           },
   }).then(async (queryResult) => {
-    const hist = await generateInvestigatorHistogram(queryResult, investigatorList, SCALE.MONTH)
+    const hist = await generateInvestigatorHistogram(queryResult, investigatorList, SCALE.MONTH, MODE.DIST)
+    return res.json(hist)
+  }).catch(e => console.log(e))
+})
+
+app.get(`/investigator/sum/:icode`, async (req, res) => {
+  const { icode } = req.params
+
+  return await prisma.decks.findMany({
+    where: {
+      investigator_code: String(icode),
+    },
+          select:{
+            investigator_code: true,
+            date: true,
+          },
+  }).then(async (queryResult) => {
+    const modifRes = dateIssue(queryResult)
+    const hist = await generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH, MODE.SUM)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
