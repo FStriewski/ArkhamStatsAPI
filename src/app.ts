@@ -69,6 +69,30 @@ app.get(`/class/dist/:iclass`, async (req, res) => {
   }).catch(e => console.log(e));
 }
 })
+app.get(`/class/sum/:iclass`, async (req, res) => {
+  const { iclass } = req.params
+  if(iclass==='all'){
+    const hist = await generateTotalCount(SCALE.MONTH)
+
+        const result = {
+          datapoints_absolute: hist, 
+          datapoints_relative: hist, 
+          meta: {
+              investigator: [iclass],
+              total: 0,
+          }
+        }
+      return res.json(result)
+  }else{
+    const members = factionMembers[iclass].map(mem => `'${mem}'`).join(',')
+    return  await prisma.$queryRaw(`SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`)
+      .then(async (queryResult) => {
+    const modifRes = dateIssue(queryResult)
+    const hist = await generateClassCountHistogram(modifRes, iclass, SCALE.MONTH, MODE.SUM)
+    return res.json(hist)
+  }).catch(e => console.log(e));
+}
+})
 
 app.get(`/investigator/dist/:icode`, async (req, res) => {
   const { icode } = req.params
@@ -126,6 +150,29 @@ app.get(`/investigator/sum/:icode`, async (req, res) => {
   }).then(async (queryResult) => {
     const modifRes = dateIssue(queryResult)
     const hist = await generateInvestigatorHistogram(modifRes, [icode], SCALE.MONTH, MODE.SUM)
+    return res.json(hist)
+  }).catch(e => console.log(e))
+})
+
+app.get(`/investigators/sum`, async (req, res) => {
+  const { i0, i1, i2 } = req.query
+
+  const investigatorList = [i0, i1, i2]
+    .filter((icode: string) => icode !== undefined)
+    .map((icode: string) => icode);
+  
+  return await prisma.decks.findMany({
+    where: {
+      investigator_code: {
+        in: investigatorList
+      }
+    },
+          select:{
+            investigator_code: true,
+            date: true,
+          },
+  }).then(async (queryResult) => {
+    const hist = await generateInvestigatorHistogram(queryResult, investigatorList, SCALE.MONTH, MODE.SUM)
     return res.json(hist)
   }).catch(e => console.log(e))
 })
