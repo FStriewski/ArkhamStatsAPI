@@ -1,20 +1,35 @@
-import {SCALE, KEYLISTCLASS, KEYLISTINVESTIGATOR} from './constants';
+import { SCALE, KEYLISTCLASS, KEYLISTINVESTIGATOR } from './constants';
 
 export type SingleDatePoint = {
-    [ key in  KEYLISTCLASS | KEYLISTINVESTIGATOR] : number} & {
-    date: string;
-    }
+  [key in KEYLISTCLASS | KEYLISTINVESTIGATOR]: number;
+} & {
+  date: string;
+};
 
 export type Data = {
-    date: Date,
-    investigator_code: string;
-}
+  date: Date;
+  investigator_code: string;
+};
 export type Count = {
-    date: Date,
-    count: number;
-}
-export type Scale = SCALE.MONTH | SCALE.DAY
+  date: Date;
+  count: number;
+};
+export type Scale = SCALE.MONTH | SCALE.DAY;
 
 export type GenericObject = {
-    [key: string]: any
-}
+  [key: string]: any;
+};
+
+export type InvCount = { count: number };
+export type Timerange = { [index: string]: SingleDatePoint[] };
+
+export type Histogram = {
+  datapoints_absolute: Timerange;
+  datapoints_relative: Timerange;
+  meta: {
+    investigators: string[];
+    numDecks: GenericObject;
+    allDeckTotal: number;
+    factionTotal: GenericObject;
+  };
+};

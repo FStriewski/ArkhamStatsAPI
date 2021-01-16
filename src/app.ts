@@ -5,9 +5,9 @@ import {
   generateInvestigatorHistogram,
   generateClassCountHistogram,
   retrieveYearEntity
-} from './histogram';
-import { SingleDatePoint, Scale, GenericObject } from './utils/types';
-import { SCALE, MODE } from './utils/constants';
+} from './histogram/histogram';
+import { SingleDatePoint, Scale, GenericObject, InvCount } from './utils/types';
+import { SCALE, MODE, factionMembers } from './utils/constants';
 import { buildTimeRange } from './utils/rangeBuilder';
 
 const prisma = new PrismaClient();
@@ -19,88 +19,38 @@ type Tick = {
   date: string;
 };
 
-export const factionMembers: { [key: string]: string[] } = {
-  guardian: [
-    '01001',
-    '02001',
-    '03001',
-    '04001',
-    '98010',
-    '06001',
-    '07001',
-    '60101'
-  ],
-  seeker: [
-    '01002',
-    '02002',
-    '03002',
-    '04002',
-    '05002',
-    '06002',
-    '07002',
-    '98007',
-    '60201'
-  ],
-  rogue: [
-    '01003',
-    '02003',
-    '03003',
-    '04003',
-    '05003',
-    '06003',
-    '07003',
-    '60301'
-  ],
-  survivor: [
-    '01005',
-    '02005',
-    '03005',
-    '04005',
-    '05005',
-    '06005',
-    '98013',
-    '60501'
-  ],
-  mystic: [
-    '01004',
-    '02004',
-    '03004',
-    '04004',
-    '05004',
-    '05006',
-    '06004',
-    '98016',
-    '60401'
-  ],
-  neutral: ['03006']
-};
-
 const dateIssue = (result: any) =>
   result.map((tick: Tick) => ({ ...tick, date: new Date(tick.date) }));
 
 export const getTotalDeckCount = async (): Promise<number> =>
   await prisma
     .$queryRaw('SELECT count(*) FROM decks;')
-    .then((res) => res[0].count)
-    .catch((e) => console.log(e));
+    .then((res: InvCount[]) => res[0].count);
 
-export const getTotalFactionCount = async () => {
+export const getTotalFactionCount = async (): Promise<GenericObject> => {
   const classes = Object.keys(factionMembers);
-  const result: GenericObject = {};
+  const facCnt_abs: GenericObject = {};
+  const facCnt_rel: GenericObject = {};
 
   for (const iclass of classes) {
     const members = factionMembers[iclass].map((mem) => `'${mem}'`).join(',');
+    const totalNumDecks = await getTotalDeckCount();
     await prisma
       .$queryRaw(
         `SELECT COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks`
       )
-      .then((res) => (result[iclass] = res[0].count));
+      .then((res: InvCount[]) => {
+        facCnt_abs[iclass] = res[0].count;
+        facCnt_rel[iclass] = Math.floor((res[0].count / totalNumDecks) * 100);
+      });
   }
 
-  return result;
+  return { facCnt_abs, facCnt_rel };
 };
 
-export const generateTotalCount = async (scale: Scale) => {
+export const generateTotalCount = async (
+  scale: Scale
+): Promise<GenericObject> => {
   return await prisma
     .$queryRaw('SELECT date, COUNT(id) AS count FROM decks GROUP BY date;')
     .then((queryResult) => {
