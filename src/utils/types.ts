@@ -9,6 +9,7 @@ export type SingleDatePoint = {
 export type Data = {
   date: Date;
   investigator_code: string;
+  val?: number;
 };
 export type FactionData = { val: number; date: Date; id?: string };
 export type Count = {

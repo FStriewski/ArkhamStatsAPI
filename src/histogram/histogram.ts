@@ -3,7 +3,6 @@ import { buildTimeRange } from '../utils/rangeBuilder';
 import {
   SingleDatePoint,
   Data,
-  FactionData,
   Scale,
   Count,
   GenericObject,
@@ -23,10 +22,7 @@ import {
 } from '../app';
 import { distHisto, sumHisto } from './invHistos';
 
-export const retrieveYearEntity = (
-  record: Count | Data | FactionData,
-  scale: Scale
-) => {
+export const retrieveYearEntity = (record: Count | Data, scale: Scale) => {
   const year = dateToYMD(record.date).slice(0, 4);
   const entry =
     scale === SCALE.DAY
@@ -42,7 +38,7 @@ export const generateClassCountHistogram = async (
   iclass: string,
   scale: Scale,
   mode: MODE
-) => {
+): Promise<Histogram> => {
   const iclasses = [iclass];
   const timerange = buildTimeRange(scale, [iclass]);
   const total = await generateTotalCount(scale);
@@ -90,8 +86,9 @@ export const generateClassCountHistogram = async (
       datapoints_absolute: timerange,
       datapoints_relative: normalizedValues(timerange),
       meta: {
-        investigator: [iclass],
-        factionCount: totalCount,
+        investigators: [iclass],
+        numDecks: totalCount,
+        allDeckTotal: await getTotalDeckCount(),
         factionTotal: await getTotalFactionCount()
       }
     };
@@ -132,8 +129,9 @@ export const generateClassCountHistogram = async (
       datapoints_absolute: sumValues(timerange).summedData,
       datapoints_relative: sumValues(timerange).normalisedSummedData,
       meta: {
-        investigator: [iclass],
-        factionCount: totalCount,
+        investigators: [iclass],
+        numDecks: totalCount,
+        allDeckTotal: await getTotalDeckCount(),
         factionTotal: await getTotalFactionCount()
       }
     };
@@ -197,7 +195,7 @@ export const generateInvestigatorHistogram = async (
 };
 
 export const generateClassHistogram = async (
-  data: FactionData[],
+  data: Data[],
   ids: string[],
   scale: Scale,
   mode: MODE
@@ -217,8 +215,8 @@ export const generateClassHistogram = async (
             (sdp: SingleDatePoint) => sdp.date.slice(0, 7) === entry
           );
     // WIE KRIEGE ICH DAS ZUSAMMEN?
-    target[record.id] += record.val;
-    totalCount[record.id] += record.val;
+    target[record.investigator_code as KEYLISTCLASS] += record.val;
+    totalCount[record.investigator_code as KEYLISTCLASS] += record.val;
   });
 
   if (mode === MODE.DIST) {

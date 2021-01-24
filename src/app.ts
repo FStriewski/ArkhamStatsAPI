@@ -11,8 +11,9 @@ import {
   SingleDatePoint,
   Scale,
   GenericObject,
-  InvCount,
-  FactionData
+  Data,
+  Count,
+  InvCount
 } from './utils/types';
 import { SCALE, MODE, factionMembers } from './utils/constants';
 import { buildTimeRange } from './utils/rangeBuilder';
@@ -21,13 +22,10 @@ const prisma = new PrismaClient();
 const app = express();
 app.use(bodyParser.json());
 
-type Tick = {
-  investigator_code: string;
-  date: string;
-};
-
-const dateIssue = (result: any) =>
-  result.map((tick: Tick) => ({ ...tick, date: new Date(tick.date) }));
+const dateIssue = (result: Data[]) =>
+  result.map((tick: Data) => ({ ...tick, date: new Date(tick.date) }));
+const dateIssueClass = (result: Count[]) =>
+  result.map((tick: Count) => ({ ...tick, date: new Date(tick.date) }));
 
 export const getTotalDeckCount = async (): Promise<number> =>
   await prisma
@@ -99,10 +97,11 @@ app.get(`/class/dist/:iclass`, async (req, res) => {
     const members = factionMembers[iclass].map((mem) => `'${mem}'`).join(',');
     return await prisma
       .$queryRaw(
+        // eslint-disable-next-line max-len
         `SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`
       )
-      .then(async (queryResult) => {
-        const modifRes = dateIssue(queryResult);
+      .then(async (queryResult: Count[]) => {
+        const modifRes: Count[] = dateIssueClass(queryResult);
         const hist = await generateClassCountHistogram(
           modifRes,
           iclass,
@@ -122,18 +121,22 @@ app.get(`/classes/dist`, async (req, res) => {
     .filter((icode: string) => icode !== undefined)
     .map((icode: string) => icode);
   console.log(classList);
-  const classCollection: FactionData[] = [];
+  const classCollection: Data[] = [];
 
   for (const iclass of classList) {
     const members = factionMembers[iclass].map((mem) => `'${mem}'`).join(',');
     await prisma
       .$queryRaw(
+        // eslint-disable-next-line max-len
         `SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS val FROM decks GROUP BY date`
       )
-      .then((queryResult) => {
-        const modifRes: FactionData = dateIssue(queryResult);
-        const result = modifRes.map((obj: FactionData) => (obj.id = iclass));
-        classCollection.push(result);
+      .then((queryResult: Data[]) => {
+        const modifRes: Data[] = dateIssue(queryResult);
+        const result = modifRes.map((obj: Data) => ({
+          ...obj,
+          investigator_code: iclass
+        }));
+        classCollection.push(...result);
       });
   }
   console.log(classCollection);
@@ -164,10 +167,11 @@ app.get(`/class/sum/:iclass`, async (req, res) => {
     const members = factionMembers[iclass].map((mem) => `'${mem}'`).join(',');
     return await prisma
       .$queryRaw(
+        // eslint-disable-next-line max-len
         `SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS count FROM decks GROUP BY date`
       )
       .then(async (queryResult) => {
-        const modifRes = dateIssue(queryResult);
+        const modifRes = dateIssueClass(queryResult);
         const hist = await generateClassCountHistogram(
           modifRes,
           iclass,
