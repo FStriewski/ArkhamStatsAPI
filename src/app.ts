@@ -4,9 +4,16 @@ import * as bodyParser from 'body-parser';
 import {
   generateInvestigatorHistogram,
   generateClassCountHistogram,
+  generateClassHistogram,
   retrieveYearEntity
 } from './histogram/histogram';
-import { SingleDatePoint, Scale, GenericObject, InvCount } from './utils/types';
+import {
+  SingleDatePoint,
+  Scale,
+  GenericObject,
+  InvCount,
+  FactionData
+} from './utils/types';
 import { SCALE, MODE, factionMembers } from './utils/constants';
 import { buildTimeRange } from './utils/rangeBuilder';
 
@@ -107,6 +114,38 @@ app.get(`/class/dist/:iclass`, async (req, res) => {
       .catch((e) => console.log(e));
   }
 });
+
+app.get(`/classes/dist`, async (req, res) => {
+  const { i0, i1, i2 } = req.query;
+
+  const classList = [i0, i1, i2]
+    .filter((icode: string) => icode !== undefined)
+    .map((icode: string) => icode);
+  console.log(classList);
+  const classCollection: FactionData[] = [];
+
+  for (const iclass of classList) {
+    const members = factionMembers[iclass].map((mem) => `'${mem}'`).join(',');
+    await prisma
+      .$queryRaw(
+        `SELECT date, COUNT(1) FILTER (WHERE investigator_code IN (${members})) AS val FROM decks GROUP BY date`
+      )
+      .then((queryResult) => {
+        const modifRes: FactionData = dateIssue(queryResult);
+        const result = modifRes.map((obj: FactionData) => (obj.id = iclass));
+        classCollection.push(result);
+      });
+  }
+  console.log(classCollection);
+  const hist = await generateClassHistogram(
+    classCollection,
+    classList,
+    SCALE.MONTH,
+    MODE.DIST
+  );
+  return res.json(hist);
+});
+
 app.get(`/class/sum/:iclass`, async (req, res) => {
   const { iclass } = req.params;
   if (iclass === 'all') {

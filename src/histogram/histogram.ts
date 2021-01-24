@@ -3,6 +3,7 @@ import { buildTimeRange } from '../utils/rangeBuilder';
 import {
   SingleDatePoint,
   Data,
+  FactionData,
   Scale,
   Count,
   GenericObject,
@@ -22,7 +23,10 @@ import {
 } from '../app';
 import { distHisto, sumHisto } from './invHistos';
 
-export const retrieveYearEntity = (record: Count | Data, scale: Scale) => {
+export const retrieveYearEntity = (
+  record: Count | Data | FactionData,
+  scale: Scale
+) => {
   const year = dateToYMD(record.date).slice(0, 4);
   const entry =
     scale === SCALE.DAY
@@ -43,7 +47,7 @@ export const generateClassCountHistogram = async (
   const timerange = buildTimeRange(scale, [iclass]);
   const total = await generateTotalCount(scale);
 
-  // Deck Count per investigator
+  // Deck Count per Class
   const totalCount: GenericObject = {};
   iclasses.forEach((iclass) => (totalCount[iclass] = 0));
 
@@ -159,6 +163,62 @@ export const generateInvestigatorHistogram = async (
           );
     target[record.investigator_code as KEYLISTINVESTIGATOR] += 1;
     totalCount[record.investigator_code as KEYLISTINVESTIGATOR] += 1;
+  });
+
+  if (mode === MODE.DIST) {
+    const result = {
+      datapoints_absolute: timerange,
+      datapoints_relative: await distHisto(ids, scale, timerange),
+      meta: {
+        investigators: ids,
+        numDecks: totalCount,
+        allDeckTotal: await getTotalDeckCount(),
+        factionTotal: await getTotalFactionCount()
+      }
+    };
+    return result;
+  }
+
+  if ((mode = MODE.SUM)) {
+    const sumHistogram = await sumHisto(ids, totalCount, timerange);
+
+    const result = {
+      datapoints_absolute: sumHistogram.summedData,
+      datapoints_relative: sumHistogram.normalisedSummedData,
+      meta: {
+        investigators: ids,
+        numDecks: totalCount,
+        allDeckTotal: await getTotalDeckCount(),
+        factionTotal: await getTotalFactionCount()
+      }
+    };
+    return result;
+  }
+};
+
+export const generateClassHistogram = async (
+  data: FactionData[],
+  ids: string[],
+  scale: Scale,
+  mode: MODE
+): Promise<Histogram> => {
+  const timerange = buildTimeRange(scale, ids);
+
+  // Deck Count per investigator
+  const totalCount: GenericObject = {};
+  ids.forEach((id) => (totalCount[id] = 0));
+
+  data.map((record) => {
+    const { year, entry } = retrieveYearEntity(record, scale);
+    const target =
+      scale === SCALE.DAY
+        ? timerange[year].find((sdp: SingleDatePoint) => sdp.date === entry)
+        : timerange[year].find(
+            (sdp: SingleDatePoint) => sdp.date.slice(0, 7) === entry
+          );
+    // WIE KRIEGE ICH DAS ZUSAMMEN?
+    target[record.id] += record.val;
+    totalCount[record.id] += record.val;
   });
 
   if (mode === MODE.DIST) {

@@ -10,6 +10,7 @@ export type Data = {
   date: Date;
   investigator_code: string;
 };
+export type FactionData = { val: number; date: Date; id?: string };
 export type Count = {
   date: Date;
   count: number;
