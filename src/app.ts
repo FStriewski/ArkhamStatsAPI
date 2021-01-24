@@ -114,7 +114,7 @@ app.get(`/class/dist/:iclass`, async (req, res) => {
   }
 });
 
-app.get(`/classes/dist`, async (req, res) => {
+app.get(`/class/dist`, async (req, res) => {
   const { i0, i1, i2 } = req.query;
 
   const classList = [i0, i1, i2]

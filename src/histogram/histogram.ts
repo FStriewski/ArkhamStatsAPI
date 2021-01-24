@@ -214,7 +214,6 @@ export const generateClassHistogram = async (
         : timerange[year].find(
             (sdp: SingleDatePoint) => sdp.date.slice(0, 7) === entry
           );
-    // WIE KRIEGE ICH DAS ZUSAMMEN?
     target[record.investigator_code as KEYLISTCLASS] += record.val;
     totalCount[record.investigator_code as KEYLISTCLASS] += record.val;
   });
