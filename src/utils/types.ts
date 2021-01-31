@@ -35,3 +35,13 @@ export type Histogram = {
     factionTotal: GenericObject;
   };
 };
+
+export type FullRecord = {
+  id: number;
+  data: Date;
+  did: string;
+  investigator_code: string;
+  investigator_name: string;
+  xp: number;
+  slots: string[];
+};

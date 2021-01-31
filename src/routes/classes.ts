@@ -2,7 +2,7 @@ import {
   generateClassCountHistogram,
   generateClassHistogram,
   retrieveYearEntity
-} from '../histogram/histogram';
+} from '../logic/histogram';
 import {
   Histogram,
   Scale,

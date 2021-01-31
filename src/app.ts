@@ -8,12 +8,13 @@ import {
   getMultipleInvDist,
   getSingleInvSum,
   getMultipleInvSum
-} from './routes/investigator';
+} from './routes/investigators';
 import {
   getSingleClassDist,
   getMultipleClassDist,
   getSingleClassSum
 } from './routes/classes';
+import { getSingleCardDist } from './routes/cards';
 
 export const prisma = new PrismaClient();
 export const app = express();
@@ -47,6 +48,9 @@ export const getTotalFactionCount = async (): Promise<GenericObject> => {
   return { facCnt_abs, facCnt_rel };
 };
 
+/**
+ *  ----- CLASSES
+ */
 app.get(`/class/dist/:iclass`, async (req, res) => {
   const { iclass } = req.params;
   const hist = await getSingleClassDist(iclass);
@@ -62,6 +66,10 @@ app.get(`/class/dist`, async (req, res) => {
   const hist = await getMultipleClassDist({ i0, i1, i2 });
   return res.json(hist);
 });
+
+/**
+ *  ----- Investigators
+ */
 app.get(`/investigator/dist/:icode`, async (req, res) => {
   const { icode } = req.params;
   const hist = await getSingleInvDist(icode);
@@ -81,6 +89,16 @@ app.get(`/investigators/sum`, async (req, res) => {
   const { i0, i1, i2 } = req.query;
   const hist = await getMultipleInvSum({ i0, i1, i2 });
   return res.json(hist);
+});
+
+/**
+ *  ----- Cards
+ */
+
+app.get(`/cards/dist/:card`, async (req, res) => {
+  const { card } = req.params;
+  const result = await getSingleCardDist(card);
+  return res.json(result);
 });
 
 export default app;

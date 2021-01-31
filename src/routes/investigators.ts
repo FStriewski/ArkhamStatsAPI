@@ -1,4 +1,4 @@
-import { generateInvestigatorHistogram } from '../histogram/histogram';
+import { generateInvestigatorHistogram } from '../logic/histogram';
 import { GenericObject, Histogram } from '../utils/types';
 import { SCALE, MODE } from '../utils/constants';
 import { prisma, dateIssue } from '../app';
