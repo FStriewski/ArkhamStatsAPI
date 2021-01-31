@@ -1,10 +1,17 @@
 import { dateToYMD } from './dateparser';
-import { SCALE, YEARS, KEYLISTCLASS, KEYLISTINVESTIGATOR } from './constants';
+import {
+  SCALE,
+  YEARS,
+  KEYLISTCLASS,
+  KEYLISTINVESTIGATOR,
+  SPAN
+} from './constants';
 import { SingleDatePoint } from './types';
 
 export const buildTimeRange = (
   scale: SCALE,
-  ids: string[]
+  ids: string[],
+  span: SPAN = SPAN.SINGLEYEAR
 ): { [index: string]: SingleDatePoint[] } => {
   const generateDateSpan = (startDate: Date, endDate: Date, scale: SCALE) => {
     const dateArr: SingleDatePoint[] = [];
@@ -26,15 +33,22 @@ export const buildTimeRange = (
     return dateArr;
   };
 
-  const rangeObject: { [index: string]: SingleDatePoint[] } = {};
-  YEARS.forEach(
-    (year) =>
-      (rangeObject[year.label] = generateDateSpan(
-        year.startDate,
-        year.endDate,
-        scale
-      ))
-  );
+  if (span === SPAN.MULTIYEAR) {
+    const startDate = YEARS[0].startDate;
+    const endDate = YEARS[YEARS.length].startDate;
 
-  return rangeObject;
+    return { all: generateDateSpan(startDate, endDate, scale) };
+  } else {
+    const rangeObject: { [index: string]: SingleDatePoint[] } = {};
+    YEARS.forEach(
+      (year) =>
+        (rangeObject[year.label] = generateDateSpan(
+          year.startDate,
+          year.endDate,
+          scale
+        ))
+    );
+
+    return rangeObject;
+  }
 };

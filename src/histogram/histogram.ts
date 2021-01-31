@@ -13,7 +13,8 @@ import {
   SCALE,
   KEYLISTCLASS,
   KEYLISTINVESTIGATOR,
-  MODE
+  MODE,
+  SPAN
 } from '../utils/constants';
 import {
   generateTotalCount,
@@ -40,7 +41,7 @@ export const generateClassCountHistogram = async (
   mode: MODE
 ): Promise<Histogram> => {
   const iclasses = [iclass];
-  const timerange = buildTimeRange(scale, [iclass]);
+  const timerange = buildTimeRange(scale, [iclass], SPAN.MULTIYEAR);
   const total = await generateTotalCount(scale);
 
   // Deck Count per Class
@@ -51,8 +52,8 @@ export const generateClassCountHistogram = async (
     const { year, entry } = retrieveYearEntity(record, scale);
     const target =
       scale === SCALE.DAY
-        ? timerange[year].find((sdp: SingleDatePoint) => sdp.date === entry)
-        : timerange[year].find(
+        ? timerange.all.find((sdp: SingleDatePoint) => sdp.date === entry)
+        : timerange.all.find(
             (sdp: SingleDatePoint) => sdp.date.slice(0, 7) === entry
           );
 

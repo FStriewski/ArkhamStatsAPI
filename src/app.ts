@@ -17,12 +17,18 @@ import {
 } from './utils/types';
 import { SCALE, MODE, factionMembers } from './utils/constants';
 import { buildTimeRange } from './utils/rangeBuilder';
+import {
+  getSingleInvDist,
+  getMultipleInvDist,
+  getSingleInvSum,
+  getMultipleInvSum
+} from './routes/investigator';
 
-const prisma = new PrismaClient();
-const app = express();
+export const prisma = new PrismaClient();
+export const app = express();
 app.use(bodyParser.json());
 
-const dateIssue = (result: Data[]) =>
+export const dateIssue = (result: Data[]) =>
   result.map((tick: Data) => ({ ...tick, date: new Date(tick.date) }));
 const dateIssueClass = (result: Count[]) =>
   result.map((tick: Count) => ({ ...tick, date: new Date(tick.date) }));
@@ -149,7 +155,7 @@ app.get(`/class/dist`, async (req, res) => {
   return res.json(hist);
 });
 
-app.get(`/class/sum/:iclass`, async (req, res) => {
+app.get(`/class/sums/:iclass`, async (req, res) => {
   const { iclass } = req.params;
   if (iclass === 'all') {
     const hist = await generateTotalCount(SCALE.MONTH);
@@ -186,116 +192,24 @@ app.get(`/class/sum/:iclass`, async (req, res) => {
 
 app.get(`/investigator/dist/:icode`, async (req, res) => {
   const { icode } = req.params;
-
-  return await prisma.decks
-    .findMany({
-      where: {
-        investigator_code: String(icode)
-      },
-      select: {
-        investigator_code: true,
-        date: true
-      }
-    })
-    .then(async (queryResult) => {
-      const modifRes = dateIssue(queryResult);
-      const hist = await generateInvestigatorHistogram(
-        modifRes,
-        [icode],
-        SCALE.MONTH,
-        MODE.DIST
-      );
-      return res.json(hist);
-    })
-    .catch((e) => console.log(e));
+  const hist = await getSingleInvDist(icode);
+  return res.json(hist);
+});
+app.get(`/investigator/sum/:icode`, async (req, res) => {
+  const { icode } = req.params;
+  const hist = await getSingleInvSum(icode);
+  return res.json(hist);
 });
 
 app.get(`/investigators/dist`, async (req, res) => {
   const { i0, i1, i2 } = req.query;
-
-  const investigatorList = [i0, i1, i2]
-    .filter((icode: string) => icode !== undefined)
-    .map((icode: string) => icode);
-
-  return await prisma.decks
-    .findMany({
-      where: {
-        investigator_code: {
-          in: investigatorList
-        }
-      },
-      select: {
-        investigator_code: true,
-        date: true
-      }
-    })
-    .then(async (queryResult) => {
-      const hist = await generateInvestigatorHistogram(
-        queryResult,
-        investigatorList,
-        SCALE.MONTH,
-        MODE.DIST
-      );
-      return res.json(hist);
-    })
-    .catch((e) => console.log(e));
+  const hist = await getMultipleInvDist({ i0, i1, i2 });
+  return res.json(hist);
 });
-
-app.get(`/investigator/sum/:icode`, async (req, res) => {
-  const { icode } = req.params;
-
-  return await prisma.decks
-    .findMany({
-      where: {
-        investigator_code: String(icode)
-      },
-      select: {
-        investigator_code: true,
-        date: true
-      }
-    })
-    .then(async (queryResult) => {
-      const modifRes = dateIssue(queryResult);
-      const hist = await generateInvestigatorHistogram(
-        modifRes,
-        [icode],
-        SCALE.MONTH,
-        MODE.SUM
-      );
-      return res.json(hist);
-    })
-    .catch((e) => console.log(e));
-});
-
 app.get(`/investigators/sum`, async (req, res) => {
   const { i0, i1, i2 } = req.query;
-
-  const investigatorList = [i0, i1, i2]
-    .filter((icode: string) => icode !== undefined)
-    .map((icode: string) => icode);
-
-  return await prisma.decks
-    .findMany({
-      where: {
-        investigator_code: {
-          in: investigatorList
-        }
-      },
-      select: {
-        investigator_code: true,
-        date: true
-      }
-    })
-    .then(async (queryResult) => {
-      const hist = await generateInvestigatorHistogram(
-        queryResult,
-        investigatorList,
-        SCALE.MONTH,
-        MODE.SUM
-      );
-      return res.json(hist);
-    })
-    .catch((e) => console.log(e));
+  const hist = await getMultipleInvSum({ i0, i1, i2 });
+  return res.json(hist);
 });
 
 export default app;
