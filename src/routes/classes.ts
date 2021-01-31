@@ -108,7 +108,6 @@ export const getMultipleClassDist = async ({
         classCollection.push(...result);
       });
   }
-  console.log(classCollection);
   const hist = await generateClassHistogram(
     classCollection,
     classList,

@@ -14,7 +14,7 @@ import {
   getMultipleClassDist,
   getSingleClassSum
 } from './routes/classes';
-import { getSingleCardDist } from './routes/cards';
+import { getCardDist } from './routes/cards';
 
 export const prisma = new PrismaClient();
 export const app = express();
@@ -95,9 +95,9 @@ app.get(`/investigators/sum`, async (req, res) => {
  *  ----- Cards
  */
 
-app.get(`/cards/dist/:card`, async (req, res) => {
-  const { card } = req.params;
-  const result = await getSingleCardDist(card);
+app.get(`/cards/dist/`, async (req, res) => {
+  const { i0, i1, i2 } = req.query;
+  const result = await getCardDist({ i0, i1, i2 });
   return res.json(result);
 });
 

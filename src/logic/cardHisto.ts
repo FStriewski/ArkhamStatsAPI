@@ -1,40 +1,43 @@
-import { FullRecord, GenericObject } from '../utils/types';
+import { GenericObject, CardSet } from '../utils/types';
 
-export const generateCardHisto = (records: FullRecord[]) => {
-  const investigatorsUsingCard: GenericObject = {};
-  const totalNumber = records.length;
-  records.map((record) => {
-    Object.keys(investigatorsUsingCard).includes(record.investigator_code)
-      ? (investigatorsUsingCard[record.investigator_code] += 1)
-      : (investigatorsUsingCard[record.investigator_code] = 1);
+export const generateCardHisto = (cardSets: CardSet) => {
+  const sets = Object.keys(cardSets);
+
+  const datapoints_absolute: GenericObject = {};
+  const datapoints_relative: GenericObject = {};
+  const numDecks: GenericObject = {};
+
+  sets.forEach((set: string) => {
+    const data = cardSets[set];
+    const totalNumber = data.length;
+    numDecks[set] = totalNumber;
+
+    const investigatorsUsingCard: GenericObject = {};
+    data.map((record) => {
+      Object.keys(investigatorsUsingCard).includes(record.investigator_code)
+        ? (investigatorsUsingCard[record.investigator_code] += 1)
+        : (investigatorsUsingCard[record.investigator_code] = 1);
+    });
+
+    datapoints_absolute[set] = investigatorsUsingCard;
+
+    const investigators = Object.keys(investigatorsUsingCard);
+    const usagePercentagePerInvestigator: GenericObject = {};
+
+    investigators.map(
+      (inv) =>
+        (usagePercentagePerInvestigator[inv] =
+          Math.floor(investigatorsUsingCard[inv] / totalNumber) * 100)
+    );
+    datapoints_relative[set] = usagePercentagePerInvestigator;
   });
 
-  const investigators = Object.keys(investigatorsUsingCard);
-  const usagePercentagePerInvestigator: GenericObject = {};
-
-  investigators.map(
-    (inv) =>
-      (usagePercentagePerInvestigator[inv] =
-        Math.floor(investigatorsUsingCard[inv] / totalNumber) * 100)
-  );
-
   const result = {
-    datapoints_absolute: investigatorsUsingCard,
-    datapoints_relative: usagePercentagePerInvestigator,
+    datapoints_absolute,
+    datapoints_relative,
     meta: {
-      numDecks: totalNumber
+      numDecks
     }
   };
   return result;
 };
-
-// const result = {
-//   datapoints_absolute: timerange,
-//   datapoints_relative: normalizedValues(timerange),
-//   meta: {
-//     investigators: [iclass],
-//     numDecks: totalCount,
-//     allDeckTotal: await getTotalDeckCount(),
-//     factionTotal: await getTotalFactionCount()
-//   }
-// };

@@ -25,6 +25,14 @@ export type GenericObject = {
 export type InvCount = { count: number };
 export type Timerange = { [index: string]: SingleDatePoint[] };
 
+export type CardHistogram = {
+  datapoints_absolute: GenericObject;
+  datapoints_relative: GenericObject;
+  meta: {
+    numDecks: GenericObject;
+  };
+};
+
 export type Histogram = {
   datapoints_absolute: Timerange;
   datapoints_relative: Timerange;
@@ -34,6 +42,10 @@ export type Histogram = {
     allDeckTotal: number;
     factionTotal: GenericObject;
   };
+};
+
+export type CardSet = {
+  [key: string]: FullRecord[];
 };
 
 export type FullRecord = {
