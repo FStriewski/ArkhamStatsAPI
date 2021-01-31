@@ -4,8 +4,8 @@ import {
   GenericObject,
   Timerange
 } from '../utils/types';
-import { generateTotalCount } from '../app';
 import { KEYLISTINVESTIGATOR } from '../utils/constants';
+import { generateTotalCount } from '../routes/classes';
 
 export const distHisto = async (
   ids: string[],

@@ -16,12 +16,9 @@ import {
   MODE,
   SPAN
 } from '../utils/constants';
-import {
-  generateTotalCount,
-  getTotalDeckCount,
-  getTotalFactionCount
-} from '../app';
+import { getTotalDeckCount, getTotalFactionCount } from '../app';
 import { distHisto, sumHisto } from './invHistos';
+import { generateTotalCount } from '../routes/classes';
 
 export const retrieveYearEntity = (record: Count | Data, scale: Scale) => {
   const year = dateToYMD(record.date).slice(0, 4);
@@ -33,7 +30,7 @@ export const retrieveYearEntity = (record: Count | Data, scale: Scale) => {
   return { year, entry };
 };
 
-// Process cound data
+// Process count data
 export const generateClassCountHistogram = async (
   data: Count[],
   iclass: string,
