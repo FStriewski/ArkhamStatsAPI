@@ -2,6 +2,7 @@ import { generateInvestigatorHistogram } from '../logic/histogram';
 import { GenericObject, Histogram } from '../utils/types';
 import { SCALE, MODE } from '../utils/constants';
 import { prisma, dateIssue } from '../app';
+import { flattenYearGrouping } from '../utils/flattenYearGrouping';
 
 export const getSingleInvDist = async (icode: string): Promise<Histogram> => {
   return await prisma.decks
@@ -110,6 +111,7 @@ export const getMultipleInvSum = async ({
         SCALE.MONTH,
         MODE.SUM
       );
-      return hist;
+      const flattenHist = flattenYearGrouping(hist);
+      return flattenHist;
     });
 };
